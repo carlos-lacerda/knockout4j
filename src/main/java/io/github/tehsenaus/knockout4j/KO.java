@@ -15,7 +15,7 @@ public class KO {
     public interface Subscribable<T> {
         Subscription<T> subscribe(Subscriber<? super T> subscriber);
     }
-    public interface Readable<T> {
+    public interface Readable<T> extends Subscribable<T> {
         T get();
     }
     public interface Writable<T> {
@@ -200,6 +200,56 @@ public class KO {
                 value.clear();
                 valueHasMutated();
             }
+        }
+    }
+
+    public static class ObservableList<T> extends AbstractList<T> implements Readable<List<T>>, Writable<List<T>> {
+        final Observable<List<T>> observable;
+
+        public ObservableList(List<T> value) {
+            observable = new Observable<List<T>>(value);
+        }
+
+        @Override
+        public List<T> get() {
+            return observable.get();
+        }
+
+        public void set(List<T> value) {
+            observable.set(value);
+        }
+
+        public Subscription<List<T>> subscribe(Subscriber<? super List<T>> subscriber) {
+            return observable.subscribe(subscriber);
+        }
+
+        @Override
+        public int size() {
+            return observable.get().size();
+        }
+
+        @Override
+        public T get(int index) {
+            return get().get(index);
+        }
+
+        @Override
+        public T set(int index, T element) {
+            T prev = observable.value.set(index, element);
+            if ( prev != element ) observable.valueHasMutated();
+            return prev;
+        }
+
+        @Override
+        public void add(int index, T element) {
+            observable.value.add(index, element);
+            observable.valueHasMutated();
+        }
+
+        public T remove(int index) {
+            T prev = observable.value.remove(index);
+            observable.valueHasMutated();
+            return prev;
         }
     }
 
